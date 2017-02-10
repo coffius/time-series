@@ -5,7 +5,7 @@ package io.koff.timeseries.naive
   */
 case class Output(timestamp: Long,
                   value: Double,
-                  numOfMeasurments: Long,
+                  numOfMeasurements: Long,
                   rollingSum: Double,
                   minValue: Double,
                   maxValue: Double)

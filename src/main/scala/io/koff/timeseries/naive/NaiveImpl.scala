@@ -40,7 +40,7 @@ object NaiveImpl {
     Output(
       timestamp = mainRecord.timestamp,
       value = mainRecord.value,
-      numOfMeasurments =  number,
+      numOfMeasurements =  number,
       rollingSum = sum,
       minValue = minVal,
       maxValue = maxVal
