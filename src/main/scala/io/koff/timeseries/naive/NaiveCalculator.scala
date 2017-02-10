@@ -39,7 +39,7 @@ object NaiveCalculator {
     ) {
       val currRecord = data(currPos)
       minVal = if(currRecord.value < minVal) currRecord.value else minVal
-      maxVal = if(currRecord.value > maxVal) currRecord.value else minVal
+      maxVal = if(currRecord.value > maxVal) currRecord.value else maxVal
       sum += currRecord.value
       number += 1
       currPos -= 1
