@@ -1,4 +1,4 @@
-package io.koff.timeseries.naive
+package io.koff.timeseries.common
 
 case class TimeRecord(timestamp: Long, value: Double)
 

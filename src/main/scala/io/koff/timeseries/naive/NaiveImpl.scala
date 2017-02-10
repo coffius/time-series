@@ -3,6 +3,8 @@ package io.koff.timeseries.naive
 import java.io.File
 import java.util
 
+import io.koff.timeseries.common.{Output, TimeRecord}
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source

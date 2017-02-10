@@ -1,4 +1,4 @@
-package io.koff.timeseries.naive
+package io.koff.timeseries.common
 
 /**
   * Created by coffius on 10.02.2017.
