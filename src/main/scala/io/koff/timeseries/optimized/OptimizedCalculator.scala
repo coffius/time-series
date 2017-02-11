@@ -4,9 +4,11 @@ import java.io.File
 
 import io.koff.timeseries.common.{Output, TimeRecord}
 
+import scala.collection.{SeqView, mutable}
 import scala.io.Source
 
 object OptimizedCalculator {
+  type DataView = mutable.IndexedSeqView[TimeRecord, Array[TimeRecord]]
 
   def calculate(file: File, bufferSize: Int, rollingWindow: Long, onResult: Output => Unit): Unit = {
     val dataSource = Source.fromFile(file)
@@ -14,89 +16,101 @@ object OptimizedCalculator {
 
     val buffer = new Array[TimeRecord](2 * bufferSize)
     var copied = copyToArray(recordIter, buffer, bufferSize, bufferSize)
-    val outputBuffer = new Array[ProcessedElement](bufferSize)
 
     while (copied > 0) {
-      calculate(bufferSize, copied, rollingWindow, buffer, outputBuffer, onResult)
+      calculate(bufferSize, copied, rollingWindow, buffer, onResult)
       Array.copy(buffer, bufferSize, buffer, 0, bufferSize)
       copied = copyToArray(recordIter, buffer, bufferSize, bufferSize)
     }
   }
 
-  def calcFirstOutput(startPos: Int, rollingWindow: Long, data: Array[TimeRecord]): ProcessedElement = {
-    val mainRecord = data(startPos)
-    var currPos = startPos
-    var minVal = Double.MaxValue
-    var maxVal = Double.MinValue
-    var sum = 0.0
-    var number = 0
+  def calcFirstElement(currPos: Int, rollingWindow: Long, data: DataView): ProcessedElement = {
+    val mainRecord  = data.last
+    val withFilters = data.reverse.takeWhile(recordFilter(mainRecord, rollingWindow))
+    val mapped = withFilters.map(_.value)
+    val length = withFilters.length
 
-    while (
-      currPos >= 0
-        && data(currPos) != null
-        && mainRecord.timestamp - data(currPos).timestamp <= rollingWindow
-    ) {
-      val currRecord = data(currPos)
-      minVal = if(currRecord.value < minVal) currRecord.value else minVal
-      maxVal = if(currRecord.value > maxVal) currRecord.value else maxVal
-      sum += currRecord.value
-      number += 1
-      currPos -= 1
+    val output = Output(
+      timestamp         = mainRecord.timestamp,
+      value             = mainRecord.value,
+      numOfMeasurements = length,
+      rollingSum        = mapped.sum,
+      minValue          = mapped.min,
+      maxValue          = mapped.max
+    )
+
+    ProcessedElement(output, Range(currPos - length + 1, currPos))
+  }
+
+  private def calcOtherElem(rollingWindow: Long,
+                            data: Array[TimeRecord],
+                            prevElem: ProcessedElement): ProcessedElement = {
+    val currPos = prevElem.range.right - 1
+    val mainRecord = data(currPos)
+    val leftRange = data.slice(0, prevElem.range.left).reverse
+    val withFilters = leftRange.takeWhile(recordFilter(mainRecord, rollingWindow))
+    val mapped = withFilters.map(_.value)
+    val filteredLength = withFilters.length
+    val num = filteredLength + prevElem.output.numOfMeasurements - 1
+    val sum = mapped.sum + prevElem.output.rollingSum - prevElem.output.value
+
+    val forWorst = data.slice(0, currPos + 1).reverse.takeWhile(recordFilter(mainRecord, rollingWindow)).map(_.value)
+    val minVal = if(prevElem.output.minValue == prevElem.output.value) {
+      if(forWorst.nonEmpty) {
+        forWorst.min
+      } else {
+        mainRecord.value
+      }
+    } else {
+      if(filteredLength <= 0) {
+        prevElem.output.minValue
+      } else {
+        math.min(mapped.min, prevElem.output.minValue)
+      }
     }
 
+    val maxVal = if(prevElem.output.maxValue == prevElem.output.value) {
+      if(forWorst.nonEmpty) {
+        forWorst.max
+      } else {
+        mainRecord.value
+      }
+    } else {
+      if(filteredLength <= 0) {
+        prevElem.output.maxValue
+      } else {
+        math.max(mapped.max, prevElem.output.maxValue)
+      }
+    }
     val output = Output(
       timestamp = mainRecord.timestamp,
       value = mainRecord.value,
-      numOfMeasurements =  number,
+      numOfMeasurements = num,
       rollingSum = sum,
       minValue = minVal,
       maxValue = maxVal
     )
 
-    ProcessedElement(output, Range(currPos, startPos))
-  }
-
-  private def calcOtherElem(startPos: Int,
-                            rollingWindow: Long,
-                            data: Array[TimeRecord],
-                            prevElem: ProcessedElement): ProcessedElement = {
-    val mainRecord = data(startPos)
-    val currPos = prevElem.range.left - 1
-    var num = prevElem.output.numOfMeasurements - 1
-    var sum = prevElem.output.rollingSum - prevElem.output.value
-
-    while (
-      currPos >= 0
-        && data(currPos) != null
-        && mainRecord.timestamp - data(currPos).timestamp <= rollingWindow
-    ) {
-      val elem = data(currPos)
-      num += 1
-      sum += elem.value
-    }
-
-    val minVal = ???
-    val maxVal = ???
-    ???
+    ProcessedElement(output, Range(currPos - num + 1, currPos))
   }
 
   private def calculate(startPos: Int,
                         length: Int,
                         rollingWindow: Long,
                         data: Array[TimeRecord],
-                        outputBuffer: Array[ProcessedElement],
                         onResult: Output => Unit): Unit = {
     val endPos = startPos + length
     var currPos = endPos - 1
-    var outputIndex = outputBuffer.length - 1
-    var prevElem = calcFirstOutput(startPos, rollingWindow, data)
-    outputBuffer(outputIndex) = prevElem
-    while (currPos >= startPos) {
-      prevElem = calcOtherElem(currPos, rollingWindow, data, prevElem)
-      outputBuffer(outputIndex) = prevElem
+    var prevElem = calcFirstElement(endPos - 1, rollingWindow, data.view(startPos, endPos))
+    val outBuilder = mutable.ArrayBuilder.make[ProcessedElement]()
+    outBuilder += prevElem
+    while (currPos > startPos) {
+      prevElem = calcOtherElem(rollingWindow, data, prevElem)
+      outBuilder += prevElem
       currPos -= 1
-      outputIndex -= 1
     }
+
+    outBuilder.result().reverse.map(_.output).foreach(onResult)
   }
 
   private def toTimeRecord(str: String) = str match {
@@ -112,5 +126,9 @@ object OptimizedCalculator {
       i += 1
     }
     i - start
+  }
+
+  private def recordFilter(mainRecord: TimeRecord, rollingWindow: Long)(record: TimeRecord): Boolean = {
+    record != null && mainRecord.timestamp - record.timestamp <= rollingWindow
   }
 }

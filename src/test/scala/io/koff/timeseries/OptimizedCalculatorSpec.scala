@@ -14,7 +14,7 @@ class OptimizedCalculatorSpec extends FreeSpec with Matchers {
     val accum = mutable.ArrayBuilder.make[Output]()
     OptimizedCalculator.calculate(new File("data/test_data.txt"), 100, 60, accum += _)
 
-    accum.result().toSeq should contain theSameElementsInOrderAs testOutput
+    accum.result().toSeq.map(_.toPrintString) should contain theSameElementsInOrderAs testOutput.map(_.toPrintString)
   }
 
   "should check array copying" in {

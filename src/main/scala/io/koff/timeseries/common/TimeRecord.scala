@@ -17,13 +17,5 @@ object TimeRecord {
       None
     }
   }
-
-  /** Length of a string for timestamps */
-  val timestampLen = 10
-  /** Length of a string for values */
-  val valueLen = 7
-  /** Length of a delimiter between a timestamp and a value */
-  val delimiterLen = 1
-  /** Number of characters for at the end of a line */
-  val eolLen = 2 // /n/r
 }
+
