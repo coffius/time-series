@@ -14,15 +14,16 @@ object OptimizedCalculator {
 
     val buffer = new Array[TimeRecord](2 * bufferSize)
     var copied = copyToArray(recordIter, buffer, bufferSize, bufferSize)
+    val outputBuffer = new Array[ProcessedElement](bufferSize)
 
     while (copied > 0) {
-      calculate(bufferSize, bufferSize + copied, rollingWindow, buffer, onResult)
+      calculate(bufferSize, copied, rollingWindow, buffer, outputBuffer, onResult)
       Array.copy(buffer, bufferSize, buffer, 0, bufferSize)
       copied = copyToArray(recordIter, buffer, bufferSize, bufferSize)
     }
   }
 
-  def calcOutput(startPos: Int, rollingWindow: Long, data: Array[TimeRecord]): Output = {
+  def calcFirstOutput(startPos: Int, rollingWindow: Long, data: Array[TimeRecord]): ProcessedElement = {
     val mainRecord = data(startPos)
     var currPos = startPos
     var minVal = Double.MaxValue
@@ -43,7 +44,7 @@ object OptimizedCalculator {
       currPos -= 1
     }
 
-    Output(
+    val output = Output(
       timestamp = mainRecord.timestamp,
       value = mainRecord.value,
       numOfMeasurements =  number,
@@ -51,19 +52,50 @@ object OptimizedCalculator {
       minValue = minVal,
       maxValue = maxVal
     )
+
+    ProcessedElement(output, Range(currPos, startPos))
+  }
+
+  private def calcOtherElem(startPos: Int,
+                            rollingWindow: Long,
+                            data: Array[TimeRecord],
+                            prevElem: ProcessedElement): ProcessedElement = {
+    val mainRecord = data(startPos)
+    val currPos = prevElem.range.left - 1
+    var num = prevElem.output.numOfMeasurements - 1
+    var sum = prevElem.output.rollingSum - prevElem.output.value
+
+    while (
+      currPos >= 0
+        && data(currPos) != null
+        && mainRecord.timestamp - data(currPos).timestamp <= rollingWindow
+    ) {
+      val elem = data(currPos)
+      num += 1
+      sum += elem.value
+    }
+
+    val minVal = ???
+    val maxVal = ???
+    ???
   }
 
   private def calculate(startPos: Int,
-                        endPos: Int,
+                        length: Int,
                         rollingWindow: Long,
                         data: Array[TimeRecord],
+                        outputBuffer: Array[ProcessedElement],
                         onResult: Output => Unit): Unit = {
-    var currPos = startPos
-
-    while (currPos < endPos) {
-      val output = calcOutput(currPos, rollingWindow, data)
-      onResult(output)
-      currPos += 1
+    val endPos = startPos + length
+    var currPos = endPos - 1
+    var outputIndex = outputBuffer.length - 1
+    var prevElem = calcFirstOutput(startPos, rollingWindow, data)
+    outputBuffer(outputIndex) = prevElem
+    while (currPos >= startPos) {
+      prevElem = calcOtherElem(currPos, rollingWindow, data, prevElem)
+      outputBuffer(outputIndex) = prevElem
+      currPos -= 1
+      outputIndex -= 1
     }
   }
 
