@@ -4,7 +4,6 @@ import java.io.File
 
 import io.koff.timeseries.common.{Output, TimeRecord}
 
-import scala.collection.mutable
 import scala.io.Source
 
 object OptimizedCalculator {
@@ -14,13 +13,12 @@ object OptimizedCalculator {
     val recordIter = dataSource.getLines().map(toTimeRecord)
 
     val buffer = new Array[TimeRecord](2 * bufferSize)
-    var newData = copyToArray(recordIter, 0, bufferSize)
+    var copied = copyToArray(recordIter, buffer, bufferSize, bufferSize)
 
-    while (newData.length > 0) {
-      Array.copy(newData, 0, buffer, bufferSize, newData.length)
-      calculate(bufferSize, bufferSize + newData.length, rollingWindow, buffer, onResult)
+    while (copied > 0) {
+      calculate(bufferSize, bufferSize + copied, rollingWindow, buffer, onResult)
       Array.copy(buffer, bufferSize, buffer, 0, bufferSize)
-      newData = copyToArray(recordIter, 0, bufferSize)
+      copied = copyToArray(recordIter, buffer, bufferSize, bufferSize)
     }
   }
 
@@ -74,14 +72,13 @@ object OptimizedCalculator {
     case invalidStr => throw new IllegalStateException(s"invalid format of string: $invalidStr")
   }
 
-  def copyToArray(iter: Iterator[TimeRecord], start: Int, len: Int): Array[TimeRecord] = {
-    val arrayBuider: mutable.ArrayBuilder[TimeRecord] = mutable.ArrayBuilder.make()
+  def copyToArray[T](src: Iterator[T], dst: Array[T], start: Int, len: Int)(): Int = {
     var i = start
     val end = start + len
-    while (i < end && iter.hasNext) {
-      arrayBuider += iter.next()
+    while (i < end && src.hasNext) {
+      dst(i) = src.next()
       i += 1
     }
-    arrayBuider.result()
+    i - start
   }
 }
