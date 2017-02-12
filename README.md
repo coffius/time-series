@@ -15,5 +15,5 @@ I have started implementing this program with `NaiveCalculator` where I used a s
 
 There are two things in `OptimizedCalculator` that I would like to bring to notice:
 
-* Usage of SeqView - lazy version of collections. It helps to avoid unnecessary copying of data between different collections during calculations.
+* Usage of SeqView - lazy version of collections. It is a convenient way to avoid unnecessary copying of data between different collections during calculations.
 * Reduction of number of operations for calculation of a rolling sum, number of measurements, min and max values. The idea is to use inverse direction of traversal of data in buffer and reusage of information from a previous element. Look at this [picture](http://i.imgur.com/kGU0jdg.jpg).
