@@ -2,6 +2,9 @@ package io.koff.timeseries.generators
 
 import java.io.{BufferedOutputStream, File, FileOutputStream, PrintWriter}
 
+/**
+  * Generator for worst case scenario when all the data is in one rolling window
+  */
 object Generator {
   private val NumberOfRecords = 100000000
   private val filename = "data/big_data.txt"
