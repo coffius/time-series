@@ -8,7 +8,7 @@ Or use `io.koff.timeseries.Main` as the entry point.
 
 There are several implementations of the necessary calculations:
 
-* `io.koff.timeseries.naive.NaiveCalculator` - a very simple but correct implementation of calculations
+* `io.koff.timeseries.naive.NaiveCalculator` - a very simple but correct implementation of calculations. It also helps to validate the optimized version of the algorithm.
 * **`io.koff.timeseries.optimized.OptimizedCalculator`** - an attempt to implement of different enhancements and optimizations. This is **the main version** of the algorithm that is used in `io.koff.timeseries.Main`
 
 I have started implementing this program with `NaiveCalculator` where I used a straightforward approach in order to understand possible problems. After that I have desided to try to add different enhancements and optimizations. In such a way I have got `OptimizedCalculator`. 
