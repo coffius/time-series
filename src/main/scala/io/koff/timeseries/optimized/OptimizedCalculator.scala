@@ -4,6 +4,7 @@ import java.io.File
 
 import io.koff.timeseries.common.{Output, TimeRecord}
 
+import scala.annotation.tailrec
 import scala.collection.{SeqView, mutable}
 import scala.io.Source
 
@@ -100,15 +101,20 @@ object OptimizedCalculator {
                         data: Array[TimeRecord],
                         onResult: Output => Unit): Unit = {
     val endPos = startPos + length
-    var currPos = endPos - 1
-    var prevElem = calcFirstElement(endPos - 1, rollingWindow, data.view(startPos, endPos))
+    val firstElement = calcFirstElement(endPos - 1, rollingWindow, data.view(startPos, endPos))
     val outBuilder = mutable.ArrayBuilder.make[ProcessedElement]()
-    outBuilder += prevElem
-    while (currPos > startPos) {
-      prevElem = calcOtherElem(rollingWindow, data, prevElem)
-      outBuilder += prevElem
-      currPos -= 1
+    outBuilder += firstElement
+
+    @tailrec
+    def _calc(currPos: Int, prevElem: ProcessedElement): Unit = {
+      if(currPos > startPos) {
+        val elem = calcOtherElem(rollingWindow, data, prevElem)
+        outBuilder += elem
+        _calc(currPos - 1, elem)
+      }
     }
+
+    _calc(endPos - 1, firstElement)
 
     outBuilder.result().reverse.map(_.output).foreach(onResult)
   }
