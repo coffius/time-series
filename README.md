@@ -19,7 +19,7 @@ There are two things in `OptimizedCalculator` that I would like to bring to noti
 * Reduction of number of operations for calculation of a rolling sum, number of measurements, min and max values. The idea is to use inverse direction of traversal through data in  the buffer and to reuse information from a previous element. Look at this [picture](http://i.imgur.com/kGU0jdg.jpg).
 
 ## Assumptions ##
-* Measurements are sorted by time from the earliest to the latest.
-* All measurements in a rolling window can be placed in RAM.
-* Values of measurements are evenly distributed.
+* Measurements are sorted by time from the earliest to the latest - this is crucial for the current algorithm.
+* All measurements in a rolling window can be placed in RAM - it is important because only input records in memory buffer are used for analisys. In other case we need to use external memory algorithms.
+* Values of measurements are evenly distributed - it helps to reduce operations to find min/max values at the average. But there are other possible options. For example, if values of measurements increase(or decrease) monotonically then it is possible to optimize this part even better.
 * All input data is placed in one file.
