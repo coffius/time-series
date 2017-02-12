@@ -47,14 +47,14 @@ object OptimizedCalculator {
                             prevElem: ProcessedElement): ProcessedElement = {
     val currPos = prevElem.range.right - 1
     val mainRecord = data(currPos)
-    val leftRange = data.slice(0, prevElem.range.left).reverse
+    val leftRange = data.view(0, prevElem.range.left).reverse
     val withFilters = leftRange.takeWhile(recordFilter(mainRecord, rollingWindow))
     val mapped = withFilters.map(_.value)
     val filteredLength = withFilters.length
     val num = filteredLength + prevElem.output.numOfMeasurements - 1
     val sum = mapped.sum + prevElem.output.rollingSum - prevElem.output.value
 
-    val forWorst = data.slice(0, currPos + 1).reverse.takeWhile(recordFilter(mainRecord, rollingWindow)).map(_.value)
+    val forWorst = data.view(0, currPos + 1).reverse.takeWhile(recordFilter(mainRecord, rollingWindow)).map(_.value)
     val minVal = if(prevElem.output.minValue == prevElem.output.value) {
       if(forWorst.nonEmpty) {
         forWorst.min
