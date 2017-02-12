@@ -17,3 +17,9 @@ There are two things in `OptimizedCalculator` that I would like to bring to noti
 
 * Usage of SeqView - lazy version of collections. It is a convenient way to avoid unnecessary copying of data between different collections during calculations.
 * Reduction of number of operations for calculation of a rolling sum, number of measurements, min and max values. The idea is to use inverse direction of traversal of data in buffer and reusage of information from a previous element. Look at this [picture](http://i.imgur.com/kGU0jdg.jpg).
+
+## Assumptions ##
+* Measurements are sorted by time from the earliest to the latest.
+* All measurements in a rolling window can be placed in RAM.
+* Values of measurements are evenly distributed.
+* All input data is placed in one file.
