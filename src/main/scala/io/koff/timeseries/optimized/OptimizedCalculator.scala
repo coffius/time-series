@@ -12,7 +12,7 @@ import scala.io.Source
   * Attempt to make some optimizations
   */
 object OptimizedCalculator {
-  // The main idea here to use SeqView as a possible to avoid unnecessary copying
+  // One of the ideas here is to use SeqView to avoid unnecessary copying
   type DataView = mutable.IndexedSeqView[TimeRecord, Array[TimeRecord]]
 
   /**
@@ -70,7 +70,7 @@ object OptimizedCalculator {
                             prevElem: ProcessedElement): ProcessedElement = {
     val currPos = prevElem.range.right - 1
     val mainRecord = data(currPos)
-    // the description in the pic here: docs/optimization.jpg
+    // the description of the left range in the pic here: docs/optimization.jpg
     val leftRange = data.view(0, prevElem.range.left).reverse
     val withFilters = leftRange.takeWhile(recordFilter(mainRecord, rollingWindow))
     val mapped = withFilters.map(_.value)
@@ -157,11 +157,20 @@ object OptimizedCalculator {
     outBuilder.result().reverse.map(_.output).foreach(onResult)
   }
 
+  /**
+    * Converts a string in TimeRecord if it is possible and throws IllegalStateException if it is not
+    * @param str the string to convert
+    * @return record
+    * @throws IllegalStateException if the string has a wrong format
+    */
   private def toTimeRecord(str: String) = str match {
     case TimeRecord(record) => record
     case invalidStr => throw new IllegalStateException(s"invalid format of string: $invalidStr")
   }
 
+  /**
+    * Copies values from a iterator to array and returns number of copied elements
+    */
   def copyToArray[T](src: Iterator[T], dst: Array[T], start: Int, len: Int)(): Int = {
     var i = start
     val end = start + len
@@ -172,6 +181,9 @@ object OptimizedCalculator {
     i - start
   }
 
+  /**
+    * Filters records according rolling window
+    */
   private def recordFilter(mainRecord: TimeRecord, rollingWindow: Long)(record: TimeRecord): Boolean = {
     record != null && mainRecord.timestamp - record.timestamp <= rollingWindow
   }

@@ -8,6 +8,9 @@ import org.scalatest.{FreeSpec, Matchers}
 
 import scala.collection.mutable
 
+/**
+  * All implementations should return the same result
+  */
 class CompareCalculatorsSpec extends FreeSpec with Matchers {
   private val file = new File("data/data_scala.txt")
   private val bufferSize = 100

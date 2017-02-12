@@ -5,7 +5,7 @@ import java.io.File
 import io.koff.timeseries.common.Output
 
 /**
-  * With optimizations
+  * Calculations with optimizations
   */
 object OptimizedMain {
   private val defaultFileName = "./data/big_data_100M.txt"

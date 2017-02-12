@@ -5,7 +5,7 @@ import java.io.File
 import io.koff.timeseries.optimized.OptimizedCalculator
 
 /**
-  * Created by coffius on 12.02.2017.
+  * The main class of the application
   */
 object Main {
   private val BufferSize = 1000

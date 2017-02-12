@@ -8,6 +8,9 @@ import org.scalatest.{FreeSpec, Matchers}
 
 import scala.collection.mutable
 
+/**
+  * Spec for NaiveCalculator
+  */
 class NaiveCalculatorSpec extends FreeSpec with Matchers {
 
   "should check calculations" in {
