@@ -1,5 +1,7 @@
 package io.koff.timeseries.common
 
+import java.text.DecimalFormat
+
 /**
   * Created by coffius on 10.02.2017.
   */
@@ -9,7 +11,9 @@ case class Output(timestamp: Long,
                   rollingSum: Double,
                   minValue: Double,
                   maxValue: Double) {
+
   def toPrintString: String = {
-    f"$timestamp%d $value%.5f $numOfMeasurements%d $rollingSum%.5f $minValue%.5f $maxValue%.5f"
+    val rollingSumStr =  new DecimalFormat("#.#####").format(rollingSum)
+    f"$timestamp%d $value%.5f $numOfMeasurements%-3d $rollingSumStr%-9s $minValue%.5f $maxValue%.5f"
   }
 }
