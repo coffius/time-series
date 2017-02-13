@@ -38,7 +38,7 @@ object ParallelCalculator {
         readF = Future { recordIter.take(bufferSize).toVector }
         buffer <- readF
         _ <- if(buffer.nonEmpty) {
-          val futures = launchInParallel(prevBuffer ++ buffer, threadBuffer, rollingWindow, prevBuffer.length, bufferSize, Seq.empty)
+          val futures = launchInParallel(prevBuffer ++ buffer, threadBuffer, rollingWindow, prevBuffer.length, buffer.length, Seq.empty)
           val resultF = Future.sequence(futures)
           for {
             _ <- prevOnResultF
@@ -73,7 +73,7 @@ object ParallelCalculator {
     if(remain <= 0) {
       futures
     } else {
-      val length = math.min(pos + threadBuffer, math.min(remain, buffer.size))
+      val length = math.min(threadBuffer, math.min(remain, buffer.size - pos))
       val future = Future {
         calculate(pos, length, rollingWindow, buffer)
       }
@@ -179,7 +179,8 @@ object ParallelCalculator {
                         rollingWindow: Long,
                         buffer: Vector[TimeRecord]): Array[ProcessedElement] = {
     val endPos = startPos + length
-    val firstElement = calcFirstElement(endPos - 1, rollingWindow, buffer.view(startPos, endPos))
+    val firstElement = calcFirstElement(endPos - 1, rollingWindow, buffer.view(0, endPos))
+//    println(s"pos: $startPos, length: $length, firstElem: $firstElement")
     val outBuilder = mutable.ArrayBuilder.make[ProcessedElement]()
     outBuilder += firstElement
 
