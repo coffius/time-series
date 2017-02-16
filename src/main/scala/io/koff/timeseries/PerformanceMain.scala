@@ -3,7 +3,7 @@ package io.koff.timeseries
 import java.io.File
 
 import io.koff.timeseries.common.Output
-import io.koff.timeseries.optimized.OptimizedCalculator
+import io.koff.timeseries.parallel.ParallelCalculator
 
 /**
   * The main class of the application
@@ -24,6 +24,6 @@ object PerformanceMain {
     }
 
     println("calculation has been started")
-    OptimizedCalculator.calculate(inputFile, BufferSize, RollingWindow, identity[Output])
+    ParallelCalculator.calculate(inputFile, BufferSize, RollingWindow, identity[Output])
   }
 }

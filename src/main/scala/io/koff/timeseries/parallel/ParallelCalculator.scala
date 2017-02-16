@@ -17,7 +17,7 @@ object ParallelCalculator {
   // One of the ideas here is to use SeqView to avoid unnecessary copying
   type DataView = SeqView[TimeRecord, Vector[TimeRecord]]
 
-  private val Parallelization = 2
+  private val Parallelization = 4
 
   /**
     * Makes calculations using input data from `file` and executes `onResult` func for each calculated output
